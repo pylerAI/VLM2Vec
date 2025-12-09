@@ -1,0 +1,9 @@
+AID_Global_I2T:
+    dataset_parser: aid_global_i2t
+    dataset_name: AID-Global-v0.2.0-1103
+    parquet_path: /gpfs/public/artifacts/aid-global/v0.1.0/train/all/annotation_parquets/1103_partial_labelled_en_truncated.parquet
+    subset_name: I2T
+    dataset_split: train
+    image_dir: /gpfs/public/artifacts/aid-global/v0.1.0/train/all/image
+    # num_sample_per_subset: 100000
+    weight: 1

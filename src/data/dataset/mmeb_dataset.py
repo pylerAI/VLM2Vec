@@ -107,8 +107,6 @@ def load_mmeb_dataset(model_args, data_args, training_args, *args, **kwargs):
     dataset = dataset.map(lambda x:
                           data_prepare(x, **kwargs), batched=True, batch_size=2048,
                           remove_columns=remove_columns, drop_last_batch=True)
-    # dataset = dataset._resolve_features()
-    # features = _infer_features_from_batch(dataset._head()) # not working: {ArrowInvalid}ArrowInvalid('Could not convert <PIL.Image.Image image mode=RGB size=128x128 at 0x7F7C794E9BD0> with type Image: did not recognize Python value type when inferring an Arrow data type')
     dataset = dataset.cast(MULTIMODAL_FEATURES)
     print_master(f"Loaded {DATASET_PARSER_NAME}/{subset_name} dataset with {num_rows} samples")
 

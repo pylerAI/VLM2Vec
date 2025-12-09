@@ -3,17 +3,6 @@ from functools import wraps
 from datasets import Features, Value, Sequence
 
 
-# MULTIMODAL_FEATURES = Features(**{
-#     "query_text": Value(dtype='string', id=None),
-#     "query_image": {'bytes': Value(dtype='null', id=None), 'path': Value(dtype='null', id=None)},
-#     "pos_text": Value(dtype='string', id=None),
-#     "pos_image": {'bytes': Value(dtype='null', id=None), 'path': Value(dtype='null', id=None)},
-#     "neg_text": Value(dtype='string', id=None),
-#     "neg_image": {'bytes': Value(dtype='null', id=None), 'path': Value(dtype='null', id=None)},
-#     "global_dataset_name": Value(dtype='string', id=None),
-# })
-
-
 MULTIMODAL_FEATURES = Features(**{
     "query_text": Value(dtype='string'),
     "query_image": {

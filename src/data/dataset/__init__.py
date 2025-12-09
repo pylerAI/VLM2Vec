@@ -15,3 +15,4 @@ from .msvd_dataset import load_msvd_dataset
 from .didemo_dataset import load_didemo_dataset
 from .cls_dataset import load_video_class_dataset
 from .ssv2_dataset import load_ssv2_dataset
+from .aid_global_dataset import load_custom_explanation_dataset, load_custom_i2t_dataset

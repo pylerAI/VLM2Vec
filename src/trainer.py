@@ -1,14 +1,11 @@
-import collections
 import contextlib
 import functools
 import shutil
 import sys
 import time
-from datetime import timedelta
 
 from packaging import version
-from accelerate import skip_first_batches, DistributedType, InitProcessGroupKwargs
-from transformers import PretrainedConfig
+from accelerate import skip_first_batches, DistributedType
 from transformers.trainer import Trainer, TRAINING_ARGS_NAME, TRAINER_STATE_NAME
 import torch.distributed as dist
 from typing import Optional
@@ -16,13 +13,13 @@ import os
 import torch
 import math
 
-from src.data.collator.train_collator import split_vlm_inputs, get_dense_rep, split_and_process_vlm_inputs
+from src.data.collator.train_collator import get_dense_rep, split_and_process_vlm_inputs
 from src.model.model import MMEBModel
 from src.loss import SimpleContrastiveLoss, DistributedContrastiveLoss
 from src.grad_cache.grad_cache import GradCache
-from torch.utils.data import DataLoader, Dataset, IterableDataset, RandomSampler, SequentialSampler
+from torch.utils.data import DataLoader
 
-from transformers.training_args import OptimizerNames, ParallelMode, TrainingArguments
+from transformers.training_args import OptimizerNames, ParallelMode
 from transformers.trainer_callback import (
     ExportableState,
     TrainerState,
@@ -37,19 +34,16 @@ from transformers.trainer_pt_utils import (
     get_model_param_count,
 )
 
-from transformers.trainer import FSDP_MODEL_NAME
 from transformers.utils import (
     XLA_FSDPV2_MIN_VERSION,
     is_accelerate_available,
     is_apex_available,
     is_torch_xla_available,
-    logging, is_sagemaker_mp_enabled,
-    CONFIG_NAME, WEIGHTS_NAME, SAFE_WEIGHTS_NAME,
-    ADAPTER_WEIGHTS_NAME, ADAPTER_SAFE_WEIGHTS_NAME
+    logging, is_sagemaker_mp_enabled
 )
 
 from src.utils import batch_to_device
-from src.utils import print_master, print_rank
+from src.utils import print_master
 
 if is_apex_available():
     from apex import amp
@@ -114,13 +108,6 @@ class MMEBTrainer(Trainer):
 
         torch.save(self.args, os.path.join(output_dir, TRAINING_ARGS_NAME))
 
-
-    def _get_train_sampler(self) -> Optional[torch.utils.data.Sampler]:
-        # override original trainer's method
-        if self.train_dataset is None or not has_length(self.train_dataset):
-            return None
-            return RandomSampler(self.train_dataset)
-
     def get_train_dataloader(self) -> DataLoader:
         """
         override original trainer's method to disable self.accelerator.prepare since it will wrap DataLoaderDispatcher and lead to
@@ -140,7 +127,7 @@ class MMEBTrainer(Trainer):
             "persistent_workers": self.args.dataloader_persistent_workers,
         }
         if not isinstance(train_dataset, torch.utils.data.IterableDataset):
-            dataloader_params["sampler"] = self._get_train_sampler()
+            dataloader_params["sampler"] = None
             dataloader_params["drop_last"] = self.args.dataloader_drop_last
             dataloader_params["worker_init_fn"] = seed_worker
             dataloader_params["prefetch_factor"] = self.args.dataloader_prefetch_factor
@@ -386,7 +373,6 @@ class MMEBTrainer(Trainer):
         for epoch in range(epochs_trained, num_train_epochs):
             epoch_dataloader = train_dataloader
             if hasattr(epoch_dataloader.dataset, "set_epoch"):
-                # print(f'\t\tSetting new epoch={epoch}')
                 epoch_dataloader.dataset.set_epoch(epoch)
 
             # Reset the past mems state at the beginning of each epoch if necessary.
@@ -428,17 +414,13 @@ class MMEBTrainer(Trainer):
                     step += 1
                     total_batched_samples += 1
 
-                    dataset_stat = collections.Counter(inputs[0]['global_dataset_name'])
-                    # print_rank(f"dataset name: {str(set(inputs[0]['global_dataset_name']))}")
-                    # for dname, count in sorted(dataset_stat.items(), key=lambda t:t[1], reverse=True):
-                    #     print_rank(f"\t\tdataset_name={dname}, count={count}")
-
                     is_last_step_and_steps_less_than_grad_acc = (
                         steps_in_epoch <= args.gradient_accumulation_steps and (step + 1) == steps_in_epoch
                     )
                     do_sync_step = is_last_step_and_steps_less_than_grad_acc or (
                         total_batched_samples % args.gradient_accumulation_steps == 0
                     )
+
                     # Since we perform prefetching, we need to manually set sync_gradients
                     if not do_sync_step:
                         self.accelerator.gradient_state._set_sync_gradients(False)

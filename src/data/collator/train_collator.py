@@ -4,13 +4,13 @@ from torch.jit import isinstance
 
 import logging
 from dataclasses import dataclass
-from transformers import ProcessorMixin, AutoProcessor, AutoTokenizer
+from transformers import ProcessorMixin
 from src.arguments import DataArguments, ModelArguments, TrainingArguments
 import torch
 from qwen_vl_utils import smart_resize
 
-from src.model.processor import LLAVA_NEXT, QWEN2_VL, QWEN2_5_VL, \
-    QWEN2_VL_TOKENSELECTION, QWEN2_5_VL_TOKENSELECTION, PHI3V, process_vlm_inputs_fns
+from src.model.processor import QWEN2_VL, QWEN2_5_VL, \
+    QWEN2_VL_TOKENSELECTION, QWEN2_5_VL_TOKENSELECTION, process_vlm_inputs_fns
 from PIL import Image
 import io
 from src.utils import print_rank, print_master
@@ -171,7 +171,7 @@ class MultimodalDataCollator:
                                 min_pixels=self.data_args.resize_min_pixels,
                                 max_pixels=max_pixels,
                             )
-                            image = image.resize((resized_width, resized_height))  
+                            image = image.resize((resized_width, resized_height))
                         visual_input.append(image)
                 else:
                     visual_input = None
@@ -201,6 +201,10 @@ class MultimodalDataCollator:
         processed_pos_inputs['text'] = [e['pos_text'] for e in examples]
         processed_qry_inputs['global_dataset_name'] = [e['global_dataset_name'] for e in examples]
         processed_pos_inputs['global_dataset_name'] = [e['global_dataset_name'] for e in examples]
+
+        if 'category_score' in examples[0]:
+            category_scores_list = [e.get('category_scores', [0] * len(examples[0]['category_scores'])) for e in examples]
+            processed_qry_inputs['category_scores'] = category_scores_list
 
         # print_rank(f"\t\tQry collator: processed_qry_inputs['input_ids'].shape={processed_qry_inputs['input_ids'].shape}\t\tPos collator: processed_pos_inputs['input_ids'].shape={processed_pos_inputs['input_ids'].shape}")
         return processed_qry_inputs, processed_pos_inputs

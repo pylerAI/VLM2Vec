@@ -26,7 +26,9 @@ class ModelArguments:
     uimask_rand: bool = field(default=False, metadata={"help": "Enable random token selection instead of uniform selection"})
     lm_skip_layer: str = field(default='[1,28,0]', metadata={"help": "Specify the layers of the language model to skip for token selection"})
     vis_skip_layer: str = field(default='[1,32,0]', metadata={"help": "Specify the layers of the vision model to skip for token selection"})
-
+    use_supcon_loss: bool = field(default=False, metadata={"help": "Use supervised contrastive loss"})
+    supcon_temperature: float = field(default=0.07, metadata={"help": "Temperature for supervised contrastive loss"})
+    supcon_loss_weight: float = field(default=0.2, metadata={"help": "Weight for supervised contrastive loss"})
 
 @dataclass
 class DataArguments:

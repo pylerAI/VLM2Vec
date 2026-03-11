@@ -633,8 +633,16 @@ class GradCacheLateProcessTrainer(MMEBTrainer):
         super(GradCacheLateProcessTrainer, self).__init__(*args, **kwargs)
         self.is_ddp = dist.is_initialized()
         self._dist_loss_scale_factor = dist.get_world_size() if self.is_ddp else 1
-        loss_fn_cls = DistributedContrastiveLoss if self.is_ddp else SimpleContrastiveLoss
-        loss_fn = loss_fn_cls(temperature=self.model.temperature)
+        use_supcon_loss = getattr(self.args, 'use_supcon_loss', False)
+        supcon_temperature = getattr(self.args, 'supcon_temperature', 0.07)
+        supcon_loss_weight = getattr(self.args, 'supcon_loss_weight', 0.2)
+        if use_supcon_loss:
+            from src.loss import DistributedMultiCategorySupConLoss, MultiCategorySupConLoss
+            loss_fn_cls = DistributedMultiCategorySupConLoss if self.is_ddp else MultiCategorySupConLoss
+            loss_fn = loss_fn_cls(temperature=supcon_temperature, base_temperature=supcon_temperature, supcon_loss_weight=supcon_loss_weight)
+        else:
+            loss_fn_cls = DistributedContrastiveLoss if self.is_ddp else SimpleContrastiveLoss
+            loss_fn = loss_fn_cls(temperature=self.model.temperature)
         # process_fn = functools.partial(process_vlm_inputs_fns[self.args.model_backbone], processor=self.processing_class, max_length=self.max_length)
 
         self.gc = GradCache(
@@ -654,6 +662,18 @@ class GradCacheLateProcessTrainer(MMEBTrainer):
         queries = batch_to_device(queries, model.device)
         targets = batch_to_device(targets, model.device)
         queries, targets = {'qry': queries}, {'tgt': targets}
+
+        loss_kwargs = {}
+        use_supcon_loss = getattr(self.args, 'use_supcon_loss', False)
+        if use_supcon_loss and 'category_score' in queries['qry']:
+            category_scores = queries['qry']['category_score']
+            if isinstance(category_scores, list):
+                category_scores = torch.tensor(
+                    category_scores,
+                    dtype=torch.long,
+                    device=model.device
+                )
+            loss_kwargs['labels'] = category_scores
 
         _distributed = self.args.local_rank > -1
         if _distributed:

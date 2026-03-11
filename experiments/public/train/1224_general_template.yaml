@@ -1,0 +1,38 @@
+AID_Global_Category:
+    dataset_parser: aid_global_explain
+    dataset_name: AID-Global-v0.1.6-GPT5.2
+    parquet_path: /gpfs/public/artifacts/aid-global/v0.1.0/train/all/annotation_parquets/train_v0.1.6_with_en_summary.parquet
+    subset_name: AID-Global-category
+    dataset_split: train
+    category: auto_select
+    add_category_description: false
+    use_general_template: true
+    image_dir: /gpfs/public/artifacts/aid-global/v0.1.0/train/all/image
+    weight: 1
+SC_027_Category:
+    dataset_parser: aid_global_explain
+    dataset_name: SC-027
+    parquet_path: /gpfs/public/artifacts/aid-global/SC-027/train/annotation_parquets/gpt5.2_sc_train_guided_with_en_summary.parquet
+    subset_name: SC-Category
+    dataset_split: train
+    category: auto_select
+    add_category_description: false
+    use_general_template: true
+    image_dir: /gpfs/public/artifacts/aid-global/SC-027/train/image
+    weight: 1
+AID_Global_I2T:
+    dataset_parser: aid_global_i2t
+    dataset_name: AID-Global-v0.1.6-GPT5.2
+    parquet_path: /gpfs/public/artifacts/aid-global/v0.1.0/train/all/annotation_parquets/train_v0.1.6_with_en_summary.parquet
+    subset_name: AID-Global-I2T
+    dataset_split: train
+    image_dir: /gpfs/public/artifacts/aid-global/v0.1.0/train/all/image
+    weight: 1
+SC_027_I2T:
+    dataset_parser: aid_global_i2t
+    dataset_name: SC-027
+    parquet_path: /gpfs/public/artifacts/aid-global/SC-027/train/annotation_parquets/gpt5.2_sc_train_guided_with_en_summary.parquet
+    subset_name: SC-027-I2T
+    dataset_split: train
+    image_dir: /gpfs/public/artifacts/aid-global/SC-027/train/image
+    weight: 1
